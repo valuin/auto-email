@@ -3,7 +3,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 from dotenv import load_dotenv
-from typing import Dict
 import csv
 
 load_dotenv()
@@ -16,10 +15,10 @@ class EmailSender:
         self.smtp_server = "smtp.gmail.com"
         self.smtp_port = 587
 
-    def send_welcome_email(self, recipient: Dict[str, str]) -> bool:
+    def send_rejection_email(self, recipient: dict) -> bool:
         try:
             message = MIMEMultipart('related')
-            message['Subject'] = f"Application Result for Calon Pengurus KSM Android 2025"
+            message['Subject'] = "Application Result for Calon Pengurus KSM Android 2025"
             message['From'] = self.email
             message['To'] = recipient['email']
 
@@ -27,12 +26,8 @@ class EmailSender:
             html_part = MIMEMultipart('alternative')
             message.attach(html_part)
 
-            # Attach the HTML content with role and division
-            html_content = self._create_email_content(
-                name=recipient['name'],
-                role=recipient['role'],
-                division=recipient['division']
-            )
+            # Attach the HTML content
+            html_content = self._create_email_content(name=recipient['name'])
             html_part.attach(MIMEText(html_content, 'html'))
 
             # Create SMTP session
@@ -46,21 +41,17 @@ class EmailSender:
             print(f"Error sending email to {recipient['email']}: {str(e)}")
             return False
 
-    def test_email_template(self, recipient: Dict[str, str]) -> None:
-        """Save the email template to a file for testing"""
-        html_content = self._create_email_content(
-            name=recipient['name'],
-            role=recipient['role'],
-            division=recipient['division']
-        )
+    def test_email_template(self, name: str) -> None:
+        """Save the rejection email template to a file for testing"""
+        html_content = self._create_email_content(name=name)
         
-        with open('test_email.html', 'w', encoding='utf-8') as f:
+        with open('test_rejection_email.html', 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        print("Test email saved to 'test_email.html'")
-   
-    def _create_email_content(self, name: str, role: str, division: str) -> str:
-        """Create HTML content for the email"""
+        print("Test rejection email template saved to 'test_rejection_email.html'")
+    
+    def _create_email_content(self, name: str) -> str:
+        """Create HTML content for the rejection email"""
         return f"""
         <html>
             <head>
@@ -84,27 +75,23 @@ class EmailSender:
                 <div class="container">
                     <img src="https://i.imgur.com/e1mU9pN.jpeg" alt="Email Header">
                     <div style="padding: 20px;">
-                        <h1>Welcome On Board, {name}!</h1>  
+                        <h1>Thank You for Your Application, {name}</h1>
                         
-                        <p>Kami ingin mengucapkan terima kasih atas partisipasi Anda dalam mendaftar sebagai Calon Pengurus KSM Android 2025. 
-                        Kami menghargai minat Anda untuk bergabung dan mengikuti seluruh rangkaian seleksi.</p>
+                        <p>Kami menghargai minat Anda untuk bergabung sebagai Calon Pengurus KSM Android 2025.</p>
 
-                        <p>Dengan senang hati, kami mengumumkan bahwa Anda telah lulus seleksi sebagai <strong>{role}, 
-                        {division} Division</strong>, pada Pengurus KSM Android 2025. <strong>Congratulations!</strong></p>
+                        <p>Setelah pertimbangan yang cermat, dengan berat hati kami informasikan bahwa saat ini kami belum dapat melanjutkan proses aplikasi Anda.</p>
 
-                        <p>Sebagai langkah selanjutnya, silakan bergabung dengan grup LINE Pengurus KSM Android 2025 melalui tautan berikut:</p>
+                        <p>Kami mendorong Anda untuk tetap terhubung dan mempertimbangkan untuk mendaftar kembali di masa mendatang atau mendaftar sebagai panitia di proker kami mendatang.</p>
+
+                        <p>Terima kasih atas waktu dan usaha Anda.</p>
                         
-                        <p><a href="https://line.me/R/ti/g/Gw3jCZw3Th">https://line.me/R/ti/g/Gw3jCZw3Th</a></p>
-
                         <p>Jika Anda memilik pertanyaan, silahkan hubungi kontak di bawah:</p>
                         <ul>
                             <li>Rafa (rapaa / 081292859754)</li>
                             <li>Kela (kayylisha / 087811830315)</li>
                         </ul>
 
-                        <p>Terima Kasih!</p>
-
-                        <p>Best regards,<br>
+                        <p>Salam hangat,<br>
                         Kabinet Growth Catalyst</p>
 
                         <p>#BlossomTogether</p>
@@ -125,11 +112,11 @@ def main():
     # Read recipients from CSV file
     recipients = []
     try:
-        with open('auto-mail/recipients.csv', 'r', encoding='utf-8') as file:
+        with open('auto-mail/anti-recipients.csv', 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             recipients = list(reader)
     except FileNotFoundError:
-        print("Error: recipients.csv not found!")
+        print("Error: anti-recipients.csv not found!")
         return
     
     # Initialize email sender
@@ -137,7 +124,7 @@ def main():
     
     # Send emails to all recipients
     for recipient in recipients:
-        success = sender.send_welcome_email(recipient)
+        success = sender.send_rejection_email(recipient)
         if success:
             print(f"✓ Email sent successfully to {recipient['email']} ({recipient['name']})")
         else:
